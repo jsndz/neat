@@ -29,3 +29,17 @@ Here you need to:
 - it can have -p as flag followed by hash
 - so find the file based on hash and decompress it to read the file
 - if -p then remove the things before null("\0") and return it
+
+## Stage 4: neat hash-object
+
+- gives hash for the file 
+- it can have -w as flag followed by filename
+- so find the file based on hash and decompress it to read the file
+- if -w then write the blob and hash to objects
+
+
+## Stage 5: Writing Index
+
+- for add not only you have to create objects you also have to stage it
+- this staging part is done in the index file ".neat/index"
+

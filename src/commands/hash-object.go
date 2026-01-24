@@ -38,7 +38,7 @@ func HashObject(args []string) {
 	header := []byte(fmt.Sprintf("blob %d\x00", len(content)))
 	blob := append(header, content...)
 
-	sha := utils.Sha1Hash(blob)
+	_, sha := utils.Sha1Hash(blob)
 	if write {
 		file, objDir := utils.ObjectPath(sha)
 		if err := utils.EnsureDir(objDir); err != nil {

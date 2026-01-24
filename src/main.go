@@ -19,6 +19,8 @@ func main() {
 		commands.CatFile(args[2:])
 	case "hash-object":
 		commands.HashObject(args[2:])
+	case "ls-tree":
+		commands.LsTree()
 	default:
 		fmt.Println("Unknown command")
 		return

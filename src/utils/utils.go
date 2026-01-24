@@ -9,12 +9,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
-func Sha1Hash(data []byte) string {
+func Sha1Hash(data []byte) ([]byte, string) {
 	h := sha1.New()
 	h.Write(data)
-	return hex.EncodeToString(h.Sum(nil))
+	return (h.Sum(nil)), hex.EncodeToString(h.Sum(nil))
 }
 
 func Compress(blob []byte) ([]byte, error) {
@@ -70,4 +71,61 @@ func ReadObject(sha string) ([]byte, error) {
 	}
 
 	return Decompress(compressed)
+}
+
+func GetFileInfo(filename string) error {
+
+	fi, err := os.Stat(filename)
+	if err != nil {
+		fmt.Println("Write error:", err)
+		return err
+	}
+
+	// Low level stats
+	// copied code from internet
+	stat := fi.Sys().(*syscall.Stat_t)
+
+	// --- timestamps ---
+	ctimeSec := stat.Ctim.Sec
+	ctimeNsec := stat.Ctim.Nsec
+
+	mtimeSec := stat.Mtim.Sec
+	mtimeNsec := stat.Mtim.Nsec
+
+	// --- filesystem identity ---
+	dev := stat.Dev
+	ino := stat.Ino
+
+	// --- permissions / mode ---
+	mode := fi.Mode().Perm()
+
+	// Git uses full mode like 100644 / 100755
+	var gitMode uint32 = 0100000 | uint32(mode)
+
+	// --- ownership ---
+	uid := stat.Uid
+	gid := stat.Gid
+
+	// --- size ---
+	size := fi.Size()
+
+	// --- flags ---
+	nameLen := len(filename)
+	stage := 0 // normal files are stage 0
+	flags := uint16(nameLen) | uint16(stage<<12)
+
+	// --- output ---
+	fmt.Printf("Path:  %s\n", filename)
+	fmt.Printf("ctime: %d.%d\n", ctimeSec, ctimeNsec)
+	fmt.Printf("mtime: %d.%d\n", mtimeSec, mtimeNsec)
+	fmt.Printf("dev:   %d\n", dev)
+	fmt.Printf("ino:   %d\n", ino)
+	fmt.Printf("mode:  %o\n", gitMode)
+	fmt.Printf("uid:   %d\n", uid)
+	fmt.Printf("gid:   %d\n", gid)
+	fmt.Printf("size:  %d\n", size)
+	fmt.Printf("flags: %d\n", flags)
+
+	return nil
+
 }
