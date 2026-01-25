@@ -21,6 +21,8 @@ func main() {
 		commands.HashObject(args[2:])
 	case "ls-tree":
 		commands.LsTree()
+	case "commit":
+		commands.Commit(args[2:])
 	default:
 		fmt.Println("Unknown command")
 		return
