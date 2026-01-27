@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/jsndz/neat/src/utils"
@@ -14,61 +15,36 @@ import (
 
 func Add(filename string) {
 
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
-	}
-
-	header := []byte(fmt.Sprintf("blob %d\x00", len(content)))
-	blob := append(header, content...)
-
+	blob := utils.CreateBlob(filename)
 	shaBin, sha := utils.Sha1Hash(blob)
-
-	file, objDir := utils.ObjectPath(sha)
-	if err := utils.EnsureDir(objDir); err != nil {
-		fmt.Println("Error creating object dir:", err)
-		return
-	}
-
-	blobPath := filepath.Join(objDir, file)
-
-	if _, err := os.Stat(blobPath); err == nil {
-		fmt.Println("Object already exists:", sha)
-		return
-	}
-
-	compressed, err := utils.Compress(blob)
-	if err != nil {
-		fmt.Println("Compression error:", err)
-		return
-	}
-
-	if err := os.WriteFile(blobPath, compressed, 0644); err != nil {
-		fmt.Println("Write error:", err)
-		return
-	}
-
+	utils.WriteBlobToObjects(sha, blob)
 	fmt.Println("Added object:", sha)
-	Index(filename, shaBin)
+	files := make(utils.Path)
+	files[filename] = shaBin
+	Index(files)
 	fmt.Println("Index Created")
 
 }
 
-func Index(filename string, sha []byte) {
+func Index(files utils.Path) {
 	var buff bytes.Buffer
 
-	buff.Write(IndexHeader(1))
-	entry, err := entryForFile(filename, sha)
-	if err != nil {
-		fmt.Println(err)
-		return
+	buff.Write(IndexHeader(len(files)))
+	for filepath, sha := range files {
+		entry, err := entryForFile(filepath, sha)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		buff.Write(entry)
 	}
-	buff.Write(entry)
+
 	if err := utils.EnsureDir(".neat"); err != nil {
 		fmt.Println("Initialize neat:", err)
 		return
 	}
+	sum, _ := utils.Sha1Hash(buff.Bytes())
+	buff.Write(sum)
 	if err := os.WriteFile(".neat/index", buff.Bytes(), 0644); err != nil {
 		fmt.Println("Write error:", err)
 		return
@@ -154,26 +130,45 @@ func entryForFile(filename string, sha []byte) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
-func AddAll(indexContent []byte) {
-	indexContent, err := os.ReadFile(".git/index")
+func AddAll() {
+	indexContent, err := os.ReadFile(".neat/index")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 
 	filesInIndex := ReadIndex(indexContent)
+	filesToIndex := make(utils.Path)
+	filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
 
-	filepath.Walk("/", func(path string, info fs.FileInfo, err error) error {
+		if strings.HasPrefix(path, ".neat") {
+			return filepath.SkipDir
+		}
 
-		return nil
+		blob := utils.CreateBlob(path)
+		shaB, sha := utils.Sha1Hash(blob)
+
+		shaExisting, exist := filesInIndex[path]
+
+		if !exist || !bytes.Equal(shaExisting, shaB) {
+			utils.WriteBlobToObjects(sha, blob)
+			filesToIndex[path] = shaB
+		} else {
+			filesToIndex[path] = shaB
+		}
+		return err
 	})
+	Index(filesToIndex)
 }
 
-func ReadIndex(indexContent []byte) map[string][]byte {
+func ReadIndex(indexContent []byte) utils.Path {
 	// this func gives the path ->sha
 	// for this you need the exact bits of flag(filename length)
 
-	filesInIndex := make(map[string][]byte)
+	filesInIndex := make(utils.Path)
 	countOfEntries := binary.BigEndian.Uint32(indexContent[8:12])
 	offset := 12
 	for i := 0; i < int(countOfEntries); i++ {

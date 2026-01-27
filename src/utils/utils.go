@@ -129,3 +129,41 @@ func GetFileInfo(filename string) error {
 	return nil
 
 }
+
+func WriteBlobToObjects(sha string, blob []byte) {
+	file, objDir := ObjectPath(sha)
+	if err := EnsureDir(objDir); err != nil {
+		fmt.Println("Error creating object dir:", err)
+		return
+	}
+
+	blobPath := filepath.Join(objDir, file)
+
+	if _, err := os.Stat(blobPath); err == nil {
+		fmt.Println("Object already exists:", sha)
+		return
+	}
+
+	compressed, err := Compress(blob)
+	if err != nil {
+		fmt.Println("Compression error:", err)
+		return
+	}
+
+	if err := os.WriteFile(blobPath, compressed, 0644); err != nil {
+		fmt.Println("Write error:", err)
+		return
+	}
+}
+
+func CreateBlob(filename string) []byte {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return nil
+	}
+
+	header := []byte(fmt.Sprintf("blob %d\x00", len(content)))
+	blob := append(header, content...)
+	return blob
+}

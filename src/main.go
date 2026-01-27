@@ -14,7 +14,11 @@ func main() {
 	case "init":
 		commands.InitNeat()
 	case "add":
+		if args[2] == "." {
+			commands.AddAll()
+		}
 		commands.Add(args[2])
+
 	case "cat-file":
 		commands.CatFile(args[2:])
 	case "hash-object":
