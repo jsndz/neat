@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 
@@ -14,24 +15,35 @@ import (
 )
 
 func Add(filename string) {
+	entries := make(utils.Path)
+	indexContent, err := os.ReadFile(".neat/index")
+	if err == nil {
+		entries = ReadIndex(indexContent)
+	}
+	rel, _ := filepath.Rel(".", filename)
+	filename = rel
 
 	blob := utils.CreateBlob(filename)
 	shaBin, sha := utils.Sha1Hash(blob)
 	utils.WriteBlobToObjects(sha, blob)
 	fmt.Println("Added object:", sha)
-	files := make(utils.Path)
-	files[filename] = shaBin
-	Index(files)
-	fmt.Println("Index Created")
+	entries[filename] = shaBin
+	WriteIndex(entries)
 
 }
 
-func Index(files utils.Path) {
+func WriteIndex(files utils.Path) {
 	var buff bytes.Buffer
 
 	buff.Write(IndexHeader(len(files)))
-	for filepath, sha := range files {
-		entry, err := entryForFile(filepath, sha)
+	paths := make([]string, 0, len(files))
+	for path := range files {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		sha := files[path]
+		entry, err := entryForFile(path, sha)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -136,22 +148,26 @@ func AddAll() {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-
 	filesInIndex := ReadIndex(indexContent)
-	filesToIndex := make(utils.Path)
+	filesToIndex := filesInIndex
 	filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
-
 		if strings.HasPrefix(path, ".neat") {
 			return filepath.SkipDir
 		}
 
+		if info.IsDir() {
+			return nil
+		}
+
+		rel, _ := filepath.Rel(".", path)
+		path = rel
 		blob := utils.CreateBlob(path)
 		shaB, sha := utils.Sha1Hash(blob)
 
-		shaExisting, exist := filesInIndex[path]
+		shaExisting, exist := filesToIndex[path]
 
 		if !exist || !bytes.Equal(shaExisting, shaB) {
 			utils.WriteBlobToObjects(sha, blob)
@@ -161,11 +177,16 @@ func AddAll() {
 		}
 		return err
 	})
-	Index(filesToIndex)
+	for p := range filesToIndex {
+		if _, err := os.Stat(p); os.IsNotExist(err) {
+			delete(filesToIndex, p)
+		}
+	}
+	WriteIndex(filesToIndex)
 }
 
 func ReadIndex(indexContent []byte) utils.Path {
-	// this func gives the path ->sha
+	// this func gives the path->sha
 	// for this you need the exact bits of flag(filename length)
 
 	filesInIndex := make(utils.Path)
