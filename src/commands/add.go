@@ -206,4 +206,5 @@ func ReadIndex(indexContent []byte) utils.Path {
 		offset = entryStart + entryLen + (8-(entryLen%8))%8
 	}
 	return filesInIndex
+
 }
