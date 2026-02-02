@@ -7,3 +7,5 @@ type TreeEntry struct {
 	Sha  []byte
 	Mode string
 }
+
+type Folders map[string][]TreeEntry
