@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -173,4 +175,36 @@ func ReadInput() string {
 	reader := bufio.NewReader(os.Stdin)
 	msg, _ := reader.ReadString('\n')
 	return msg
+}
+
+func ReadIndex(indexContent []byte) Path {
+	// this func gives the path->sha
+	// for this you need the exact bits of flag(filename length)
+
+	filesInIndex := make(Path)
+	countOfEntries := binary.BigEndian.Uint32(indexContent[8:12])
+	offset := 12
+	for i := 0; i < int(countOfEntries); i++ {
+		entryStart := offset
+
+		sha := make([]byte, 20)
+		copy(sha, indexContent[entryStart+40:entryStart+60])
+
+		flag := binary.BigEndian.Uint16(indexContent[entryStart+60 : entryStart+62])
+		pathLen := int(flag & 0x0FFF)
+		path := indexContent[entryStart+62 : entryStart+62+pathLen]
+		filesInIndex[string(path)] = sha
+		entryLen := 62 + pathLen
+		offset = entryStart + entryLen + (8-(entryLen%8))%8
+	}
+	return filesInIndex
+
+}
+
+func GetParentCommit() (string, bool) {
+	sha, err := os.ReadFile(".neat/refs/heads/main")
+	if err != nil {
+		return "", false
+	}
+	return strings.TrimSpace(string(sha)), true
 }

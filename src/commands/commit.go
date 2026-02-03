@@ -2,7 +2,9 @@ package commands
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -10,6 +12,32 @@ import (
 )
 
 func Commit(message string) {
+	var index utils.Path
+	if indexContent, err := os.ReadFile(".neat/index"); err == nil {
+		index = utils.ReadIndex(indexContent)
+	}
+
+	folders := GetFolders(index)
+	treeSha := CreateTree(folders)
+	parentCommitSha, exists := utils.GetParentCommit()
+
+	var buf bytes.Buffer
+	treeHex := hex.EncodeToString(treeSha)
+	buf.WriteString(fmt.Sprintf("tree %s\n", treeHex))
+
+	if exists {
+		buf.WriteString(fmt.Sprintf("parent %s\n", parentCommitSha))
+	}
+
+	buf.WriteString(utils.AuthorLine() + "\n")
+	buf.WriteString(utils.CommitterLine() + "\n\n")
+	buf.WriteString(message)
+
+	header := fmt.Sprintf("commit %d\x00", buf.Len())
+	content := append([]byte(header), buf.Bytes()...)
+	commitShaBytes, commitSha := utils.Sha1Hash(content)
+	utils.WriteToObjects(string(commitSha), content)
+	os.WriteFile(".neat/refs/heads/main", commitShaBytes, 0644)
 
 }
 

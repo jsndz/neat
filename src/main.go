@@ -32,6 +32,10 @@ func main() {
 		} else {
 			fmt.Println("Enter The commit Message:")
 			message := utils.ReadInput()
+			if message == "" {
+				fmt.Println("Empty commit message. Aborting.")
+				return
+			}
 			commands.Commit(message)
 		}
 

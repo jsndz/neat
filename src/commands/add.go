@@ -18,7 +18,7 @@ func Add(filename string) {
 	entries := make(utils.Path)
 	indexContent, err := os.ReadFile(".neat/index")
 	if err == nil {
-		entries = ReadIndex(indexContent)
+		entries = utils.ReadIndex(indexContent)
 	}
 	rel, _ := filepath.Rel(".", filename)
 	filename = rel
@@ -148,7 +148,7 @@ func AddAll() {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	filesInIndex := ReadIndex(indexContent)
+	filesInIndex := utils.ReadIndex(indexContent)
 	filesToIndex := filesInIndex
 	filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
@@ -183,28 +183,4 @@ func AddAll() {
 		}
 	}
 	WriteIndex(filesToIndex)
-}
-
-func ReadIndex(indexContent []byte) utils.Path {
-	// this func gives the path->sha
-	// for this you need the exact bits of flag(filename length)
-
-	filesInIndex := make(utils.Path)
-	countOfEntries := binary.BigEndian.Uint32(indexContent[8:12])
-	offset := 12
-	for i := 0; i < int(countOfEntries); i++ {
-		entryStart := offset
-
-		sha := make([]byte, 20)
-		copy(sha, indexContent[entryStart+40:entryStart+60])
-
-		flag := binary.BigEndian.Uint16(indexContent[entryStart+60 : entryStart+62])
-		pathLen := int(flag & 0x0FFF)
-		path := indexContent[entryStart+62 : entryStart+62+pathLen]
-		filesInIndex[string(path)] = sha
-		entryLen := 62 + pathLen
-		offset = entryStart + entryLen + (8-(entryLen%8))%8
-	}
-	return filesInIndex
-
 }
