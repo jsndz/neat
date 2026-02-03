@@ -35,9 +35,11 @@ func Commit(message string) {
 
 	header := fmt.Sprintf("commit %d\x00", buf.Len())
 	content := append([]byte(header), buf.Bytes()...)
-	commitShaBytes, commitSha := utils.Sha1Hash(content)
-	utils.WriteToObjects(string(commitSha), content)
-	os.WriteFile(".neat/refs/heads/main", commitShaBytes, 0644)
+	_, commitSha := utils.Sha1Hash(content)
+	utils.WriteToObjects((commitSha), content)
+	currentBranch := utils.GetCurrentBranch()
+	branchPath := fmt.Sprintf(".neat/refs/heads/%s", currentBranch)
+	os.WriteFile(branchPath, []byte(commitSha), 0644)
 
 }
 

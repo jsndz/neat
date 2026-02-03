@@ -143,19 +143,32 @@ func entryForFile(filename string, sha []byte) ([]byte, error) {
 }
 
 func AddAll() {
-	indexContent, err := os.ReadFile(".neat/index")
-	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
+	var filesInIndex utils.Path = make(utils.Path)
+
+	if indexContent, err := os.ReadFile(".neat/index"); err == nil {
+		filesInIndex = utils.ReadIndex(indexContent)
 	}
-	filesInIndex := utils.ReadIndex(indexContent)
-	filesToIndex := filesInIndex
+
+	filesToIndex := make(utils.Path)
+	for k, v := range filesInIndex {
+		filesToIndex[k] = v
+	}
+
 	filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
 		if strings.HasPrefix(path, ".neat") {
-			return filepath.SkipDir
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if strings.HasPrefix(path, ".git") {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if info.IsDir() {
@@ -171,8 +184,6 @@ func AddAll() {
 
 		if !exist || !bytes.Equal(shaExisting, shaB) {
 			utils.WriteToObjects(sha, blob)
-			filesToIndex[path] = shaB
-		} else {
 			filesToIndex[path] = shaB
 		}
 		return err

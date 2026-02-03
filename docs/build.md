@@ -45,16 +45,27 @@ Here you need to:
 
 ## Stage 6: Commit 
 
-- Commit happens in these stages:
-    - read the index for files 
-    - make tree object bottom up 
-    - and one final tree representing all the structure will be used for commit
-    - then create commit object which consist of header -> commit <size>\0
-    - then content in bytes
-    tree <root_tree_sha>
-    parent <parent_commit_sha>      (omit if first commit)
-    author <name> <email> <timestamp> <timezone>
-    committer <name> <email> <timestamp> <timezone>
+- Commit happens in these stages,
+- read the index for files 
+- make tree object bottom up 
+- and one final tree representing all the structure will be used for commit
+- then create commit object which consist of header -> commit <size>\0
+- then content in bytes
+tree <root_tree_sha>
+parent <parent_commit_sha>      (omit if first commit)
+author <name> <email> <timestamp> <timezone>
+committer <name> <email> <timestamp> <timezone>
 
-    <commit message>
+<commit message>
 
+
+## Stage 7: Branches
+
+- Since implementing these commands the idea about git becomes solid
+- Now will do Branches which will be pretty easy
+
+
+## Stage 8: Commands
+
+- Won't be implementing these commands but after knowing how git works 
+- these command will be easy to understand due to the mental model

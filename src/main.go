@@ -17,9 +17,9 @@ func main() {
 	case "add":
 		if args[2] == "." {
 			commands.AddAll()
+		} else {
+			commands.Add(args[2])
 		}
-		commands.Add(args[2])
-
 	case "cat-file":
 		commands.CatFile(args[2:])
 	case "hash-object":
@@ -27,18 +27,21 @@ func main() {
 	case "ls-tree":
 		commands.LsTree()
 	case "commit":
-		if args[2] == "-m" {
+		if len(args) >= 4 && args[2] == "-m" {
 			commands.Commit(args[3])
 		} else {
-			fmt.Println("Enter The commit Message:")
+			fmt.Print("Enter the commit message: ")
 			message := utils.ReadInput()
+
 			if message == "" {
 				fmt.Println("Empty commit message. Aborting.")
 				return
 			}
+
 			commands.Commit(message)
 		}
-
+	case "branch":
+		commands.Branch(args[2])
 	default:
 		fmt.Println("Unknown command")
 		return
