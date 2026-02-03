@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/jsndz/neat/src/commands"
+	"github.com/jsndz/neat/src/utils"
 )
 
 func main() {
@@ -26,7 +27,14 @@ func main() {
 	case "ls-tree":
 		commands.LsTree()
 	case "commit":
-		commands.Commit(args[2:])
+		if args[2] == "-m" {
+			commands.Commit(args[3])
+		} else {
+			fmt.Println("Enter The commit Message:")
+			message := utils.ReadInput()
+			commands.Commit(message)
+		}
+
 	default:
 		fmt.Println("Unknown command")
 		return

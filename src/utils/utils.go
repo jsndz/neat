@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"compress/zlib"
 	"crypto/sha1"
@@ -130,7 +131,7 @@ func GetFileInfo(filename string) error {
 
 }
 
-func WriteBlobToObjects(sha string, blob []byte) {
+func WriteToObjects(sha string, blob []byte) {
 	file, objDir := ObjectPath(sha)
 	if err := EnsureDir(objDir); err != nil {
 		fmt.Println("Error creating object dir:", err)
@@ -166,4 +167,10 @@ func CreateBlob(filename string) []byte {
 	header := []byte(fmt.Sprintf("blob %d\x00", len(content)))
 	blob := append(header, content...)
 	return blob
+}
+
+func ReadInput() string {
+	reader := bufio.NewReader(os.Stdin)
+	msg, _ := reader.ReadString('\n')
+	return msg
 }

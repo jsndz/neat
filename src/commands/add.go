@@ -25,7 +25,7 @@ func Add(filename string) {
 
 	blob := utils.CreateBlob(filename)
 	shaBin, sha := utils.Sha1Hash(blob)
-	utils.WriteBlobToObjects(sha, blob)
+	utils.WriteToObjects(sha, blob)
 	fmt.Println("Added object:", sha)
 	entries[filename] = shaBin
 	WriteIndex(entries)
@@ -170,7 +170,7 @@ func AddAll() {
 		shaExisting, exist := filesToIndex[path]
 
 		if !exist || !bytes.Equal(shaExisting, shaB) {
-			utils.WriteBlobToObjects(sha, blob)
+			utils.WriteToObjects(sha, blob)
 			filesToIndex[path] = shaB
 		} else {
 			filesToIndex[path] = shaB
