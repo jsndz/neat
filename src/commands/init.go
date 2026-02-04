@@ -18,7 +18,7 @@ func InitNeat() {
 		}
 	}
 
-	headFileContent := []byte("ref: refs/heads/main\n")
+	headFileContent := []byte("ref: refs/heads/main")
 
 	if err := os.WriteFile(".neat/HEAD", headFileContent, 0644); err != nil {
 		fmt.Println("Error in writing HEAD", err)

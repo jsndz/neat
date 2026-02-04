@@ -42,6 +42,12 @@ func main() {
 		}
 	case "branch":
 		commands.Branch(args[2])
+	case "switch":
+		commands.Switch(args[2])
+	case "checkout":
+		commands.Switch(args[2])
+	case "clone":
+		commands.Clone(args[2])
 	default:
 		fmt.Println("Unknown command")
 		return

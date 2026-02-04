@@ -76,7 +76,7 @@ func CreateTree(folders utils.Folders) []byte {
 				sha = e.Sha
 			}
 			//  structure of tree entry
-			// mode name 00 sha -> everything in bytes
+			// mode name \0sha -> everything in bytes (\0->00)
 			entry := fmt.Sprintf("%s %s", e.Mode, e.Name)
 
 			buff.Write([]byte(entry))

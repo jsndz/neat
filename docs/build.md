@@ -58,14 +58,21 @@ committer <name> <email> <timestamp> <timezone>
 
 <commit message>
 
+## Stage 7: Clone
 
-## Stage 7: Branches
+- Get the .neat folder from the url
+- Unzip it
+- Write to the folder
+- Get the commit Sha
+- from commit sha restore the file
+
+## Stage 8: Branches
 
 - Since implementing these commands the idea about git becomes solid
 - Now will do Branches which will be pretty easy
 
 
-## Stage 8: Commands
+## Stage 9: Commands
 
 - Won't be implementing these commands but after knowing how git works 
 - these command will be easy to understand due to the mental model

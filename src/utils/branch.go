@@ -40,3 +40,17 @@ func GetCurrentBranchCommitSha() string {
 	return strings.TrimSpace(string(content))
 
 }
+
+func GetBranchCommitSha(branch string) string {
+
+	branchPath := fmt.Sprintf(".neat/refs/heads/%s", branch)
+
+	content, err := os.ReadFile(branchPath)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return ""
+	}
+
+	return strings.TrimSpace(string(content))
+
+}
